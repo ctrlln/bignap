@@ -33,19 +33,28 @@ const locations = Array.from({ length: NUM_LOCATIONS }).map((_, i) => ({
 }));
 
 // 2. Generate Students
-const students = Array.from({ length: NUM_STUDENTS }).map((_, i) => ({
-    student_id: i + 1,
-    first_name: faker.person.firstName(),
-    last_name: faker.person.lastName(),
-    email: faker.internet.email(),
-    work_phone: faker.phone.number(),
-    home_phone: faker.phone.number(),
-    work_city: faker.location.city(),
-    work_country: faker.location.country(),
-    date_entered: faker.date.past().toISOString(),
-    location_id: pickOne(locations).location_id,
-    professionalrole: faker.person.jobTitle(),
-}));
+const students = Array.from({ length: NUM_STUDENTS }).map((_, i) => {
+    const rand = faker.number.float({ min: 0, max: 1 });
+    let role = 'student';
+    if (rand < 0.05) role = 'admin';
+    else if (rand < 0.15) role = 'master_trainer';
+    else if (rand < 0.30) role = 'trainer';
+
+    return {
+        student_id: i + 1,
+        first_name: faker.person.firstName(),
+        last_name: faker.person.lastName(),
+        email: faker.internet.email(),
+        work_phone: faker.phone.number(),
+        home_phone: faker.phone.number(),
+        work_city: faker.location.city(),
+        work_country: faker.location.country(),
+        date_entered: faker.date.past().toISOString(),
+        location_id: pickOne(locations).location_id,
+        professionalrole: faker.person.jobTitle(),
+        role: role
+    };
+});
 
 // 3. Student Degrees
 const degrees = Array.from({ length: NUM_DEGREES }).map((_, i) => ({

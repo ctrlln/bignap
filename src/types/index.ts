@@ -1,4 +1,6 @@
 
+export type UserRole = 'admin' | 'master_trainer' | 'trainer' | 'student';
+
 export interface Location {
     location_id: number;
     location_name: string;
@@ -16,6 +18,7 @@ export interface Student {
     professionalrole: string;
     work_city: string;
     location_id: number;
+    role: 'admin' | 'master_trainer' | 'trainer' | 'student';
 }
 
 export interface Degree {
