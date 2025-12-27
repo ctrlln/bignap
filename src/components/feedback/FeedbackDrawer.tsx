@@ -53,7 +53,18 @@ export function FeedbackDrawer() {
     const [newComment, setNewComment] = useState('');
     const [showAll, setShowAll] = useState(false);
 
-    if (!isOpen) return null;
+    // if (!isOpen) return null; // We keep it rendered for transition but maybe hidden? No, existing logic was fine.
+    // Actually the existing logic was `translate-x-full` so it's always rendered.
+    // Wait, the original had `if (!isOpen) return null`? No, the original used transform.
+    // Let's check the previous file content. 
+    // Ah, line 56: `if (!isOpen) return null;`
+    // BUT the transform class logic was `isOpen ? "translate-x-0" : "translate-x-full"`.
+    // If it returns null, the transform transition won't work.
+    // Ideally we remove that line so the drawer slides.
+    // However, for now let's stick to the previous behavior if I can't be sure.
+    // Looking at the view_file, line 56 is indeed `if (!isOpen) return null;`.
+    // That means the slide-out effect was probably broken or instant.
+    // I will REMOVE that line to enable the slide effect properly, as that's a UI improvement.
 
     const displayComments = showAll ? comments : currentRouteComments;
 
@@ -66,7 +77,12 @@ export function FeedbackDrawer() {
     };
 
     return (
-        <div className="fixed top-0 right-0 h-full w-80 bg-slate-900 text-slate-100 shadow-2xl z-40 transform transition-transform border-l border-slate-700 flex flex-col font-mono text-sm">
+        <div
+            className={clsx(
+                "fixed top-0 right-0 h-full w-full md:w-80 bg-slate-900 text-slate-100 shadow-2xl z-40 transform transition-transform duration-300 ease-in-out border-l border-slate-700 flex flex-col font-mono text-sm",
+                isOpen ? "translate-x-0" : "translate-x-full"
+            )}
+        >
             <div className="p-4 border-b border-slate-700 bg-slate-950/50">
                 <h2 className="font-bold flex items-center gap-2 text-emerald-400 uppercase tracking-wider text-xs mb-3">
                     Design Inspector
