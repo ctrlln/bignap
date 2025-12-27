@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Search } from 'lucide-react';
+import { Card } from './ui/Card';
 
 interface Column<T> {
     header: string;
@@ -10,7 +11,7 @@ interface Column<T> {
 interface DataTableProps<T> {
     data: T[];
     columns: Column<T>[];
-    title: string;
+    title?: string;
 }
 
 export function DataTable<T>({ data, columns, title }: DataTableProps<T>) {
@@ -24,23 +25,23 @@ export function DataTable<T>({ data, columns, title }: DataTableProps<T>) {
     );
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <Card className="overflow-hidden">
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20">
+                {title && <h2 className="text-lg font-semibold text-foreground">{title}</h2>}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                     <input
                         type="text"
                         placeholder="Search..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all w-full sm:w-64"
+                        className="pl-9 pr-4 py-1.5 border border-input rounded-md text-sm bg-background focus:outline-none focus:ring-1 focus:ring-ring transition-all w-full sm:w-64"
                     />
                 </div>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+                    <thead className="bg-muted/50 text-muted-foreground font-medium border-b border-border">
                         <tr>
                             {columns.map((col, i) => (
                                 <th key={i} className="px-6 py-3 whitespace-nowrap">
@@ -49,12 +50,12 @@ export function DataTable<T>({ data, columns, title }: DataTableProps<T>) {
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-border">
                         {filteredData.length > 0 ? (
                             filteredData.map((item, i) => (
-                                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                <tr key={i} className="hover:bg-muted/30 transition-colors">
                                     {columns.map((col, j) => (
-                                        <td key={j} className="px-6 py-3 text-gray-700 whitespace-nowrap">
+                                        <td key={j} className="px-6 py-3 text-foreground whitespace-nowrap">
                                             {col.accessor(item)}
                                         </td>
                                     ))}
@@ -62,7 +63,7 @@ export function DataTable<T>({ data, columns, title }: DataTableProps<T>) {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={columns.length} className="px-6 py-8 text-center text-muted-foreground">
                                     No results found
                                 </td>
                             </tr>
@@ -70,6 +71,6 @@ export function DataTable<T>({ data, columns, title }: DataTableProps<T>) {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </Card>
     );
 }
