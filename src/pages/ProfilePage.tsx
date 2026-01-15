@@ -1,26 +1,26 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { fetchData } from '../lib/api';
-import type { Certification } from '../types';
+import { fetchMyCertifications } from '../lib/api';
+import type { Certification, Address } from '../lib/data/types';
 import { generateCertificatePDF } from '../lib/certificate';
-import { Award, Save, Loader2, Download } from 'lucide-react';
+import { Award, Save, Loader2, Download, LogOut, MapPin } from 'lucide-react';
+import { LocationSearchInput } from '../components/ui/LocationSearchInput';
+import { Input } from '../components/ui/Input';
 
 export function ProfilePage() {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, logout } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [certificates, setCertificates] = useState<Certification[]>([]);
     const [isLoadingCerts, setIsLoadingCerts] = useState(true);
+    const [editAddress, setEditAddress] = useState<Address | null>(null);
 
     const [formData, setFormData] = useState({
         first_name: '',
         last_name: '',
         email: '',
-        professionalrole: '',
-        work_city: '',
     });
 
     useEffect(() => {
@@ -29,16 +29,14 @@ export function ProfilePage() {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 email: user.email,
-                professionalrole: user.professionalrole,
-                work_city: user.work_city,
             });
+            setEditAddress(user.address || null);
 
             // Fetch certificates
-            fetchData().then(db => {
-                const userCerts = db.certifications.filter(c => c.student_id === user.student_id);
-                setCertificates(userCerts);
-                setIsLoadingCerts(false);
-            });
+            fetchMyCertifications()
+                .then(setCertificates)
+                .catch(console.error)
+                .finally(() => setIsLoadingCerts(false));
         }
     }, [user]);
 
@@ -49,7 +47,7 @@ export function ProfilePage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        updateProfile(formData);
+        updateProfile({ ...formData, address: editAddress || undefined });
         setIsEditing(false);
     };
 
@@ -72,69 +70,73 @@ export function ProfilePage() {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-500">First Name</label>
-                                    <input
+                                    <label className="text-sm font-medium text-muted-foreground">First Name</label>
+                                    <Input
                                         type="text"
                                         name="first_name"
                                         value={formData.first_name}
                                         onChange={handleInputChange}
                                         disabled={!isEditing}
-                                        className="w-full p-2 rounded border border-slate-200 bg-background disabled:bg-slate-50 disabled:text-slate-500"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-500">Last Name</label>
-                                    <input
+                                    <label className="text-sm font-medium text-muted-foreground">Last Name</label>
+                                    <Input
                                         type="text"
                                         name="last_name"
                                         value={formData.last_name}
                                         onChange={handleInputChange}
                                         disabled={!isEditing}
-                                        className="w-full p-2 rounded border border-slate-200 bg-background disabled:bg-slate-50 disabled:text-slate-500"
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500">Email</label>
-                                <input
+                                <label className="text-sm font-medium text-muted-foreground">Email</label>
+                                <Input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     disabled={!isEditing}
-                                    className="w-full p-2 rounded border border-slate-200 bg-background disabled:bg-slate-50 disabled:text-slate-500"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500">Professional Role</label>
-                                <input
-                                    type="text"
-                                    name="professionalrole"
-                                    value={formData.professionalrole}
-                                    onChange={handleInputChange}
-                                    disabled={!isEditing}
-                                    className="w-full p-2 rounded border border-slate-200 bg-background disabled:bg-slate-50 disabled:text-slate-500"
-                                />
+                                <label className="text-sm font-medium text-muted-foreground">Location</label>
+                                {isEditing ? (
+                                    <div className="space-y-2">
+                                        <LocationSearchInput
+                                            defaultValue={editAddress?.formatted}
+                                            onSelect={setEditAddress}
+                                            placeholder="Search your city..."
+                                        />
+                                        {editAddress && (
+                                            <p className="text-xs text-primary flex items-center gap-1">
+                                                <MapPin size={12} /> {editAddress.formatted}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 p-2 rounded-md border border-transparent disabled:bg-muted text-foreground">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                                        {user.address ? (
+                                            <span>{user.address.city}, {user.address.country}</span>
+                                        ) : (
+                                            <span className="text-muted-foreground italic">No location set</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500">City</label>
-                                <input
-                                    type="text"
-                                    name="work_city"
-                                    value={formData.work_city}
-                                    onChange={handleInputChange}
-                                    disabled={!isEditing}
-                                    className="w-full p-2 rounded border border-slate-200 bg-background disabled:bg-slate-50 disabled:text-slate-500"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-500">System Role (Read-Only)</label>
-                                <div className="w-full p-2 rounded border border-slate-200 bg-slate-50 text-slate-500 capitalize">
-                                    {user.role.replace('_', ' ')}
+                                <label className="text-sm font-medium text-muted-foreground">System Roles</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {user.roles.map(r => (
+                                        <span key={r} className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground text-sm capitalize">
+                                            {r.replace('_', ' ')}
+                                        </span>
+                                    ))}
                                 </div>
                             </div>
 
@@ -173,16 +175,23 @@ export function ProfilePage() {
                         ) : (
                             <div className="space-y-4">
                                 {certificates.map(cert => (
-                                    <div key={cert.studentcertification_id} className="flex items-start justify-between p-4 rounded-lg border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors">
+                                    <div key={cert.id} className="flex items-start justify-between p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors">
                                         <div>
-                                            <h4 className="font-bold text-slate-900">{cert.certification}</h4>
-                                            <p className="text-sm text-slate-500">Awarded: {new Date(cert.certification_date).toLocaleDateString()}</p>
+                                            <h4 className="font-bold text-foreground">{cert.certification_type}</h4>
+                                            <p className="text-sm text-muted-foreground">Awarded: {new Date(cert.issue_date).toLocaleDateString()}</p>
+                                            <p className="text-xs text-muted-foreground/70 mt-1">Center: {cert.issuing_center_name || 'N/A'}</p>
                                         </div>
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="text-xs flex items-center gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-600"
-                                            onClick={() => generateCertificatePDF(user, cert)}
+                                            className="text-xs flex items-center gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/20 text-muted-foreground"
+                                            onClick={async () => {
+                                                let stampUrl = null;
+                                                if (cert.issuing_center_stamp_url) {
+                                                    stampUrl = `http://localhost:3000/uploads/${cert.issuing_center_stamp_url}`;
+                                                }
+                                                await generateCertificatePDF(user as any, cert, stampUrl);
+                                            }}
                                             title="Download PDF Certificate"
                                         >
                                             <Download size={12} /> Download
@@ -193,6 +202,16 @@ export function ProfilePage() {
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="flex justify-center pt-8 pb-4">
+                <Button
+                    variant="default"
+                    onClick={() => logout()}
+                    className="bg-red-600 hover:bg-red-700 text-white text-lg px-8 py-6 w-full max-w-sm shadow-lg flex items-center justify-center gap-2"
+                >
+                    <LogOut size={24} /> Log Out Securely
+                </Button>
             </div>
         </div>
     );

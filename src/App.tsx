@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { StudentsPage } from './pages/StudentsPage';
@@ -8,11 +8,34 @@ import { DegreesPage } from './pages/DegreesPage';
 import { CertificationsPage } from './pages/CertificationsPage';
 import { CoursesPage } from './pages/CoursesPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { LocationSettingsPage } from './pages/LocationSettingsPage';
+import { LoginPage } from './pages/LoginPage';
 
 
 import { FeedbackProvider } from './contexts/FeedbackContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-import { AuthProvider } from './contexts/AuthContext';
+function RequireAuth({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-950 text-white">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !user.roles?.some(r => allowedRoles.includes(r))) {
+    return <Navigate to="/" replace />; // Or forbidden page
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
   return (
@@ -20,7 +43,13 @@ function App() {
       <AuthProvider>
         <FeedbackProvider>
           <Routes>
-            <Route path="/" element={<Layout />}>
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route path="/" element={
+              <RequireAuth>
+                <Layout />
+              </RequireAuth>
+            }>
               <Route index element={<Dashboard />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="locations" element={<LocationsPage />} />
@@ -28,6 +57,11 @@ function App() {
               <Route path="certifications" element={<CertificationsPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="profile" element={<ProfilePage />} />
+              <Route path="location-settings" element={
+                <RequireAuth allowedRoles={['admin', 'master_trainer']}>
+                  <LocationSettingsPage />
+                </RequireAuth>
+              } />
             </Route>
           </Routes>
         </FeedbackProvider>

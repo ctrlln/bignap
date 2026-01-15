@@ -1,6 +1,14 @@
 
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, MapPin, GraduationCap, Award, BookOpen } from 'lucide-react';
+import {
+    LayoutDashboard,
+    Users,
+    MapPin,
+    GraduationCap,
+    Award,
+    BookOpen,
+    Settings
+} from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -24,7 +32,7 @@ function UserBadge() {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate text-foreground">{user.first_name} {user.last_name}</p>
-                <p className="text-muted-foreground capitalize truncate">{user.role.replace('_', ' ')}</p>
+                <p className="text-muted-foreground capitalize truncate">{user.roles?.map(r => r.replace('_', ' ')).join(', ') || 'Student'}</p>
             </div>
         </Link>
     );
@@ -32,6 +40,7 @@ function UserBadge() {
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     const location = useLocation();
+    const { user } = useAuth();
 
     return (
         <div className="flex flex-col h-full">
@@ -62,6 +71,24 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                         </Link>
                     );
                 })}
+                {/* Admin/Master Trainer Links */}
+                {user?.roles?.some(r => ['admin', 'master_trainer'].includes(r)) && (
+                    <div className="pt-4 border-t border-slate-700">
+                        <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                            Administration
+                        </p>
+                        <Link
+                            to="/location-settings"
+                            className={clsx(
+                                "flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors",
+                                location.pathname === '/location-settings' && "bg-slate-700 text-white border-r-4 border-primary"
+                            )}
+                        >
+                            <Settings size={20} />
+                            <span className="font-medium">Location Settings</span>
+                        </Link>
+                    </div>
+                )}
             </nav>
         </div>
     );

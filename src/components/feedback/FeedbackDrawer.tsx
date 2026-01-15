@@ -21,7 +21,7 @@ function PersonaSwitcher() {
                     <UserCog size={16} className="text-slate-400" />
                     <div>
                         <div className="text-[10px] text-slate-500 uppercase">Viewing As</div>
-                        <div className="font-bold text-slate-200">{user ? user.role.replace('_', ' ') : 'Guest'}</div>
+                        <div className="font-bold text-slate-200">{user ? user.roles?.map(r => r.replace('_', ' ')).join(', ') : 'Guest'}</div>
                     </div>
                 </div>
                 <ChevronDown size={14} className="text-slate-500" />

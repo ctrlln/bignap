@@ -1,35 +1,34 @@
-
 import { useEffect, useState } from 'react';
-import type { Database } from '../types';
-import { fetchData } from '../lib/api';
+import type { TrainingEvent } from '../lib/data/types';
+import { fetchEvents } from '../lib/api';
 import { DataTable } from '../components/DataTable';
 import { PageHeader } from '../components/ui/PageHeader';
 
 export function CoursesPage() {
-    const [data, setData] = useState<Database | null>(null);
+    const [events, setEvents] = useState<TrainingEvent[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchData().then(setData).catch(console.error);
+        fetchEvents()
+            .then(data => setEvents(data))
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, []);
 
-    if (!data) return <div className="p-8">Loading...</div>;
+    if (loading) return <div className="p-8">Loading...</div>;
 
     return (
         <div className="space-y-6">
             <PageHeader title="Training Courses" description="Scheduled training sessions and workshops." />
 
             <DataTable
-                data={data.courses}
+                data={events}
                 columns={[
-                    { header: 'Course Name', accessor: (c) => <span className="font-medium text-foreground">{c.coursename}</span> },
-                    { header: 'Date', accessor: (c) => new Date(c.coursedate).toLocaleDateString() },
-                    { header: 'Center', accessor: (c) => c.center_name },
-                    {
-                        header: 'Enrolled Student', accessor: (c) => {
-                            const s = data.students.find(st => st.student_id === c.student_id);
-                            return s ? `${s.first_name} ${s.last_name}` : 'Unknown';
-                        }
-                    },
+                    { header: 'Type', accessor: (c) => <span className="font-medium text-foreground">{c.course_type}</span> },
+                    { header: 'Start Date', accessor: (c) => new Date(c.start_date).toLocaleDateString() },
+                    { header: 'End Date', accessor: (c) => new Date(c.end_date).toLocaleDateString() },
+                    { header: 'Center', accessor: (c) => c.center_name || 'N/A' },
+                    { header: 'Lead Trainer', accessor: (c) => c.lead_trainer_name || 'N/A' },
                 ]}
             />
         </div>

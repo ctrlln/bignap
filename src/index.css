@@ -22,33 +22,38 @@
 }
 
 :root {
-  /* HSL values for easy tweaking */
-  --primary: oklch(0.55 0.25 260);
-  /* Deep Blue/Purple */
-  --primary-foreground: oklch(0.98 0 0);
+  /* Brand Color: #81AEB5 (Teal) */
+  --primary: #81AEB5;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: oklch(0.95 0.05 260);
-  /* Light Blue/Purple */
-  --secondary-foreground: oklch(0.35 0.15 260);
+  /* Surface / Secondary: #EFF6F7 (Light Teal) */
+  --secondary: #EFF6F7;
+  --secondary-foreground: #2C3F42;
 
-  --accent: oklch(0.95 0.05 150);
-  /* Soft Green for accents */
-  --accent-foreground: oklch(0.25 0.1 150);
+  /* Accent: #F1F5F9 (Hover states) */
+  --accent: #F1F5F9;
+  --accent-foreground: #1F2937;
 
-  --background: oklch(0.98 0.01 240);
-  /* Very light cool gray */
-  --foreground: oklch(0.25 0.02 240);
+  /* Background: #FAFCFD (Clean Off-White) */
+  --background: #FAFCFD;
+  --foreground: #1F2937;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.02 240);
+  /* Cards */
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
 
-  --muted: oklch(0.96 0.01 240);
-  --muted-foreground: oklch(0.55 0.03 240);
+  /* Muted */
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
 
-  --border: oklch(0.92 0.02 240);
-  --input: oklch(0.92 0.02 240);
+  /* Borders & Inputs */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #81AEB5;
+  --ring-offset: #FFFFFF;
 
-  --radius: 0.75rem;
+  /* Radius: 8px default */
+  --radius: 0.5rem;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
