@@ -24,12 +24,14 @@ export function DegreesPage() {
             <DataTable
                 data={degrees}
                 columns={[
-                    { header: 'Degree', accessor: (d) => <span className="font-bold text-foreground">{d.degree}</span> },
-                    { header: 'Discipline', accessor: (d) => d.discipline },
+                    { header: 'Degree', accessor: (d) => <span className="font-bold text-foreground">{d.degree}</span>, sortable: true, sortAccessor: (d) => d.degree },
+                    { header: 'Discipline', accessor: (d) => d.discipline, sortable: true, sortAccessor: (d) => d.discipline },
                     {
-                        header: 'Student', accessor: (d) => d.first_name && d.last_name
+                        header: 'Trainee', accessor: (d) => d.first_name && d.last_name
                             ? `${d.first_name} ${d.last_name}`
-                            : 'Unknown'
+                            : 'Unknown',
+                        sortable: true,
+                        sortAccessor: (d) => `${d.first_name || ''} ${d.last_name || ''}`
                     },
                 ]}
             />

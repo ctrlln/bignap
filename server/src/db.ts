@@ -6,7 +6,7 @@ import { faker } from '@faker-js/faker';
 const db = new Database('local.db', { verbose: console.log });
 db.pragma('journal_mode = WAL');
 
-const ROLES = ['admin', 'master_trainer', 'trainer', 'student', 'center_director'];
+const ROLES = ['admin', 'master_trainer', 'trainer', 'trainee', 'center_director'];
 
 export function initDB() {
   // 1. Create Tables
@@ -61,11 +61,11 @@ export function initDB() {
     CREATE TABLE IF NOT EXISTS enrollments (
       id TEXT PRIMARY KEY,
       event_id TEXT,
-      student_id TEXT,
+      trainee_id TEXT,
       status TEXT,
       grade TEXT,
       FOREIGN KEY(event_id) REFERENCES training_events(id),
-      FOREIGN KEY(student_id) REFERENCES users(id)
+      FOREIGN KEY(trainee_id) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS certifications (
@@ -85,10 +85,10 @@ export function initDB() {
 
     CREATE TABLE IF NOT EXISTS degrees (
       id TEXT PRIMARY KEY,
-      student_id TEXT,
+      trainee_id TEXT,
       degree TEXT,
       discipline TEXT,
-      FOREIGN KEY(student_id) REFERENCES users(id)
+      FOREIGN KEY(trainee_id) REFERENCES users(id)
     );
   `);
 
@@ -141,14 +141,14 @@ export function initDB() {
     const adminId = createSeededUser('verna.schamberger@test.local', 'Verna', 'Schamberger', ['admin'], 'PhD, NIDCAP Master Trainer', 'Boston', 'USA');
     const masterId = createSeededUser('luther.jacobs@test.local', 'Luther', 'Jacobs', ['master_trainer', 'center_director'], 'MD, PhD', 'Stockholm', 'Sweden');
     const trainerId = createSeededUser('gayle.harvey@test.local', 'Gayle', 'Harvey', ['trainer'], 'RN, MSN', 'Oklahoma City', 'USA');
-    const studentId = createSeededUser('Werner69@hotmail.com', 'Marquise', 'Brakus', ['student'], 'RN', 'Berlin', 'Germany'); // From CSV
+    const traineeId = createSeededUser('Werner69@hotmail.com', 'Marquise', 'Brakus', ['trainee'], 'RN', 'Berlin', 'Germany'); // From CSV
 
-    // -- Degrees (Seeding for core student) --
-    const insertDegree = db.prepare('INSERT INTO degrees (id, student_id, degree, discipline) VALUES (?, ?, ?, ?)');
-    insertDegree.run(randomUUID(), studentId, 'BSN', 'Nursing');
+    // -- Degrees (Seeding for core trainee) --
+    const insertDegree = db.prepare('INSERT INTO degrees (id, trainee_id, degree, discipline) VALUES (?, ?, ?, ?)');
+    insertDegree.run(randomUUID(), traineeId, 'BSN', 'Nursing');
 
-    // Random Students
-    const studentIds: string[] = [studentId];
+    // Random Trainees
+    const traineeIds: string[] = [traineeId];
     for (let i = 0; i < 40; i++) {
       const city = faker.location.city();
       const country = faker.location.country();
@@ -156,12 +156,12 @@ export function initDB() {
         faker.internet.email(),
         faker.person.firstName(),
         faker.person.lastName(),
-        ['student'],
+        ['trainee'],
         faker.helpers.arrayElement(['RN', 'MD', 'PT', 'OT']),
         city,
         country
       );
-      studentIds.push(uid);
+      traineeIds.push(uid);
 
       // Random degree
       if (Math.random() > 0.3) {
@@ -213,7 +213,7 @@ export function initDB() {
         VALUES (?, ?, ?, ?, ?, ?)
     `);
     const insertEnrollment = db.prepare(`
-        INSERT INTO enrollments (id, event_id, student_id, status, grade)
+        INSERT INTO enrollments (id, event_id, trainee_id, status, grade)
         VALUES (?, ?, ?, ?, ?)
     `);
 
@@ -234,9 +234,9 @@ export function initDB() {
         faker.helpers.arrayElement([masterId, trainerId])
       );
 
-      // Enroll 5-10 students per course
-      const specificStudents = faker.helpers.arrayElements(studentIds, faker.number.int({ min: 5, max: 10 }));
-      for (const sid of specificStudents) {
+      // Enroll 5-10 trainees per course
+      const specificTrainees = faker.helpers.arrayElements(traineeIds, faker.number.int({ min: 5, max: 10 }));
+      for (const sid of specificTrainees) {
         insertEnrollment.run(
           randomUUID(),
           eventId,

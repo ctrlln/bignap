@@ -24,12 +24,13 @@ export function CoursesPage() {
             <DataTable
                 data={events}
                 columns={[
-                    { header: 'Type', accessor: (c) => <span className="font-medium text-foreground">{c.course_type}</span> },
-                    { header: 'Start Date', accessor: (c) => new Date(c.start_date).toLocaleDateString() },
-                    { header: 'End Date', accessor: (c) => new Date(c.end_date).toLocaleDateString() },
-                    { header: 'Center', accessor: (c) => c.center_name || 'N/A' },
-                    { header: 'Lead Trainer', accessor: (c) => c.lead_trainer_name || 'N/A' },
+                    { header: 'Type', accessor: (c) => <span className="font-medium text-foreground">{c.course_type}</span>, sortable: true, sortAccessor: (c) => c.course_type },
+                    { header: 'Start Date', accessor: (c) => new Date(c.start_date).toLocaleDateString(), sortable: true, sortAccessor: (c) => new Date(c.start_date).getTime() },
+                    { header: 'End Date', accessor: (c) => new Date(c.end_date).toLocaleDateString(), sortable: true, sortAccessor: (c) => new Date(c.end_date).getTime() },
+                    { header: 'Center', accessor: (c) => c.center_name || 'N/A', sortable: true, sortAccessor: (c) => c.center_name || '' },
+                    { header: 'Lead Trainer', accessor: (c) => c.lead_trainer_name || 'N/A', sortable: true, sortAccessor: (c) => c.lead_trainer_name || '' },
                 ]}
+                defaultSort={{ colIndex: 1, direction: 'desc' }}
             />
         </div>
     );

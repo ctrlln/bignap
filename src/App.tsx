@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
-import { StudentsPage } from './pages/StudentsPage';
+import { TraineesPage } from './pages/TraineesPage';
 import { LocationsPage } from './pages/LocationsPage';
 import { DegreesPage } from './pages/DegreesPage';
 import { CertificationsPage } from './pages/CertificationsPage';
@@ -51,7 +51,7 @@ function App() {
               </RequireAuth>
             }>
               <Route index element={<Dashboard />} />
-              <Route path="students" element={<StudentsPage />} />
+              <Route path="trainees" element={<TraineesPage />} />
               <Route path="locations" element={<LocationsPage />} />
               <Route path="degrees" element={<DegreesPage />} />
               <Route path="certifications" element={<CertificationsPage />} />

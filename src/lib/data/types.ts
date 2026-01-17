@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'master_trainer' | 'trainer' | 'student' | 'center_director';
+export type UserRole = 'admin' | 'master_trainer' | 'trainer' | 'trainee' | 'center_director';
 
 export interface Address {
     street?: string;
@@ -44,7 +44,7 @@ export interface TrainingCenter {
     is_active: boolean;
 }
 
-export type CourseType = 'NIDCAP' | 'APIB' | 'FINE' | 'Intro';
+export type CourseType = string;
 
 export interface TrainingEvent {
     id: string;
@@ -62,7 +62,7 @@ export type EnrollmentStatus = 'registered' | 'attended' | 'completed' | 'incomp
 export interface Enrollment {
     id: string;
     event_id: string;
-    student_id: string;
+    trainee_id: string;
     status: EnrollmentStatus;
     grade?: string;
 }
@@ -79,13 +79,13 @@ export interface Certification {
     revoked_at?: string;
     issuing_center_name?: string; // Joined
     issuing_center_stamp_url?: string; // Joined
-    first_name?: string; // Joined (Student)
-    last_name?: string; // Joined (Student)
+    first_name?: string; // Joined (Trainee)
+    last_name?: string; // Joined (Trainee)
 }
 
 export interface Degree {
     id: string;
-    student_id: string;
+    trainee_id: string;
     degree: string;
     discipline: string;
     first_name?: string; // Joined
@@ -93,7 +93,7 @@ export interface Degree {
 }
 
 export interface DashboardStats {
-    students: number;
+    trainees: number;
     locations: number;
     certifications: number;
     courses: number;

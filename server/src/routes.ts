@@ -257,68 +257,7 @@ router.get('/admin/certifications', requireRole('admin'), (req, res) => {
 });
 
 
-// Admin: Map Data (Aggregated Certifications by Center Location)
-router.get('/admin/map-data', requireAuth, (req, res) => {
-    try {
-        const result = db.prepare(`
-            SELECT 
-                tc.name, 
-                tc.address_json,
-                count(c.id) as count
-            FROM certifications c
-            JOIN training_centers tc ON c.issuing_center_id = tc.id
-            GROUP BY tc.id
-        `).all() as { name: string, address_json: string, count: number }[];
 
-        // Precise coordinates static lookup (fallback)
-        // Note: Ideally all centers have lat/lng in address_json from seed
-        const cityCoords: Record<string, [number, number]> = {
-            'Boston': [-71.0589, 42.3601],
-            'Stockholm': [18.0686, 59.3293],
-            'Oklahoma City': [-97.5164, 35.4676],
-            'Berlin': [13.4050, 52.5200],
-            'San Francisco': [-122.4194, 37.7749],
-            'Boise': [-116.2023, 43.6150],
-            'Modena': [10.9252, 44.6471],
-            'Barcelona': [2.1734, 41.3851],
-        };
-
-        const mapData = result.map(center => {
-            let coordinates: [number, number] | null = null;
-
-            // Try to parse address_json for lat/lng
-            if (center.address_json) {
-                try {
-                    const addr = JSON.parse(center.address_json);
-                    if (addr.lat && addr.lng) {
-                        coordinates = [parseFloat(addr.lng), parseFloat(addr.lat)]; // GeoJSON is [lng, lat]
-                    } else if (addr.city && cityCoords[addr.city]) {
-                        coordinates = cityCoords[addr.city];
-                    }
-                } catch (e) {
-                    console.warn(`Failed to parse address for center ${center.name}`);
-                }
-            }
-
-            if (!coordinates) {
-                // Fallback if seeded data matches name (less reliable)
-                // For now, if no coords, we skip or put at 0,0
-                return null;
-            }
-
-            return {
-                name: center.name,
-                coordinates,
-                count: center.count
-            };
-        }).filter(item => item !== null);
-
-        res.json({ data: mapData });
-    } catch (e) {
-        console.error('Failed to fetch map data:', e);
-        res.status(500).json({ error: 'Failed to fetch map data' });
-    }
-});
 
 
 
@@ -332,7 +271,7 @@ router.get('/admin/stats', requireRole('admin'), (req, res) => {
 
         res.json({
             data: {
-                students: studentCount.count,
+                trainees: studentCount.count,
                 locations: centerCount.count,
                 certifications: certCount.count,
                 courses: eventCount.count
@@ -344,13 +283,13 @@ router.get('/admin/stats', requireRole('admin'), (req, res) => {
     }
 });
 
-// Admin: Degrees
+// Protected: Admin: Degrees
 router.get('/admin/degrees', requireRole('admin'), (req, res) => {
     try {
         const degrees = db.prepare(`
             SELECT d.*, u.first_name, u.last_name
             FROM degrees d
-            JOIN users u ON d.student_id = u.id
+            JOIN users u ON d.trainee_id = u.id
             `).all();
         res.json({ data: degrees });
     } catch (e) {

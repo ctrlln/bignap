@@ -12,7 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Students', path: '/students', icon: Users },
+    { name: 'Users', path: '/trainees', icon: Users },
     { name: 'Locations', path: '/locations', icon: MapPin },
     // { name: 'Degrees', path: '/degrees', icon: GraduationCap }, // Removed per request
     { name: 'Certifications', path: '/certifications', icon: Award },
@@ -30,7 +30,7 @@ function UserBadge() {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate text-foreground">{user.first_name} {user.last_name}</p>
-                <p className="text-muted-foreground capitalize truncate">{user.roles?.map(r => r.replace('_', ' ')).join(', ') || 'Student'}</p>
+                <p className="text-muted-foreground capitalize truncate">{user.roles?.map(r => r.replace('_', ' ')).join(', ') || 'Trainee'}</p>
             </div>
         </Link>
     );

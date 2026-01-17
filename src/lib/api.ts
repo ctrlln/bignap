@@ -48,9 +48,7 @@ export async function fetchStats(): Promise<DashboardStats> {
     return fetchWithAuth('/admin/stats');
 }
 
-export async function fetchMapData(): Promise<{ name: string, coordinates: [number, number], count: number }[]> {
-    return fetchWithAuth('/admin/map-data');
-}
+
 
 
 export async function fetchDegrees(): Promise<Degree[]> {

@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Plus, Mail } from 'lucide-react';
 
-export function StudentsPage() {
+export function TraineesPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,7 +40,9 @@ export function StudentsPage() {
                                 </div>
                                 <span className="font-medium text-foreground">{s.first_name} {s.last_name}</span>
                             </div>
-                        )
+                        ),
+                        sortable: true,
+                        sortAccessor: (s) => `${s.first_name || ''} ${s.last_name || ''}`
                     },
                     {
                         header: 'Email',
@@ -49,21 +51,23 @@ export function StudentsPage() {
                                 <Mail size={14} />
                                 {s.email}
                             </div>
-                        )
+                        ),
+                        sortable: true,
+                        sortAccessor: (s) => s.email
                     },
                     {
                         header: 'Roles',
                         accessor: (s) => (
                             <div className="flex gap-1 flex-wrap">
                                 {Array.isArray(s.roles) ? s.roles.map(r => (
-                                    <Badge key={r} variant={r === 'student' ? 'secondary' : 'default'} className="capitalize">
+                                    <Badge key={r} variant={r === 'trainee' ? 'secondary' : 'default'} className="capitalize">
                                         {r.replace('_', ' ')}
                                     </Badge>
                                 )) : <Badge variant="destructive">Invalid Roles</Badge>}
                             </div>
                         )
                     },
-                    { header: 'Joined', accessor: (s) => s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A' },
+                    { header: 'Joined', accessor: (s) => s.created_at ? new Date(s.created_at).toLocaleDateString() : 'N/A', sortable: true, sortAccessor: (s) => s.created_at ? new Date(s.created_at).getTime() : 0 },
                 ]}
             />
         </div>

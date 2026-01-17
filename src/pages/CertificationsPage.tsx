@@ -25,14 +25,16 @@ export function CertificationsPage() {
             <DataTable
                 data={certifications}
                 columns={[
-                    { header: 'Certification', accessor: (c) => <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">{c.certification_type}</Badge> },
-                    { header: 'Date Awarded', accessor: (c) => new Date(c.issue_date).toLocaleDateString() },
+                    { header: 'Certification', accessor: (c) => <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700">{c.certification_type}</Badge>, sortable: true, sortAccessor: (c) => c.certification_type },
+                    { header: 'Date Awarded', accessor: (c) => new Date(c.issue_date).toLocaleDateString(), sortable: true, sortAccessor: (c) => new Date(c.issue_date).getTime() },
                     {
-                        header: 'Student', accessor: (c) => c.first_name && c.last_name
+                        header: 'Trainee', accessor: (c) => c.first_name && c.last_name
                             ? `${c.first_name} ${c.last_name}`
-                            : 'Unknown'
+                            : 'Unknown',
+                        sortable: true,
+                        sortAccessor: (c) => `${c.first_name || ''} ${c.last_name || ''}`
                     },
-                    { header: 'Center', accessor: (c) => c.issuing_center_name || 'N/A' },
+                    { header: 'Center', accessor: (c) => c.issuing_center_name || 'N/A', sortable: true, sortAccessor: (c) => c.issuing_center_name || '' },
                     {
                         header: 'Action', accessor: (c) => {
                             const token = localStorage.getItem('bignap_token');
@@ -48,6 +50,7 @@ export function CertificationsPage() {
                         }
                     },
                 ]}
+                defaultSort={{ colIndex: 1, direction: 'desc' }}
             />
         </div>
     );

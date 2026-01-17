@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     const [isLoading, setIsLoading] = useState(true);
 
-    const availableRoles: UserRole[] = ['admin', 'master_trainer', 'trainer', 'student', 'center_director'];
+    const availableRoles: UserRole[] = ['admin', 'master_trainer', 'trainer', 'trainee', 'center_director'];
 
     // Restore session
     useEffect(() => {

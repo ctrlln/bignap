@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     ComposableMap,
     Geographies,
@@ -7,41 +7,35 @@ import {
     Marker,
     ZoomableGroup
 } from "react-simple-maps";
-import { scaleLinear } from "d3-scale";
 import { Tooltip } from "react-tooltip";
-import { fetchMapData } from "../lib/api";
+import { fetchCenters } from "../lib/api";
+import type { TrainingCenter } from "../lib/data/types";
+import { useNavigate } from "react-router-dom";
 
 const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-110m.json";
 
-interface MapLocation {
-    name: string;
-    coordinates: [number, number];
-    count: number;
-}
-
 export function DashboardMap() {
-    const [locations, setLocations] = useState<MapLocation[]>([]);
+    const [locations, setLocations] = useState<TrainingCenter[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        fetchMapData()
-            .then(data => setLocations(data))
+        fetchCenters()
+            .then(data => {
+                // Filter out centers without valid coordinates
+                const validLocations = data.filter(
+                    center => center.address?.lat && center.address?.lng
+                );
+                setLocations(validLocations);
+            })
             .catch(err => console.error('Failed to load map data', err));
     }, []);
-
-    const popScale = useMemo(
-        () =>
-            scaleLinear<number>()
-                .domain([0, 50]) // Adjusted domain for certifications
-                .range([4, 20]),
-        []
-    );
 
     return (
         <div className="w-full h-[500px] bg-card rounded-xl border relative overflow-hidden flex items-center justify-center">
             <ComposableMap
                 projection="geoMercator"
                 projectionConfig={{
-                    scale: 120, // Increased by ~10% from 110
+                    scale: 120,
                     rotate: [-10, 0, 0],
                     center: [0, 40]
                 }}
@@ -65,32 +59,41 @@ export function DashboardMap() {
                                         strokeWidth={0.5}
                                         style={{
                                             default: { outline: "none" },
-                                            hover: { fill: "#E2E8F0", outline: "none" }, // var(--border) for slightly darker hover
+                                            hover: { fill: "#E2E8F0", outline: "none" },
                                             pressed: { outline: "none" },
                                         }}
                                     />
                                 ))
                         }
                     </Geographies>
-                    {locations.map(({ name, coordinates, count }) => (
-                        <Marker key={name} coordinates={coordinates}>
-                            <circle
-                                r={popScale(count)}
-                                fill="#81AEB5" // var(--primary)
-                                fillOpacity={0.6}
-                                stroke="#81AEB5"
-                                strokeWidth={1}
-                                className="hover:scale-110 transition-transform duration-300 cursor-pointer outline-none"
-                                data-tooltip-id="map-tooltip"
-                                data-tooltip-content={`${name}: ${count} certifications`}
-                            />
-                        </Marker>
-                    ))}
+                    {locations.map((center) => {
+                        const lat = parseFloat(center.address!.lat!);
+                        const lng = parseFloat(center.address!.lng!);
+
+                        return (
+                            <Marker
+                                key={center.id}
+                                coordinates={[lng, lat]}
+                                onClick={() => navigate('/locations')}
+                            >
+                                <circle
+                                    r={6}
+                                    fill="#81AEB5" // var(--primary)
+                                    fillOpacity={0.8}
+                                    stroke="#fff"
+                                    strokeWidth={1.5}
+                                    className="hover:scale-125 transition-transform duration-300 cursor-pointer outline-none"
+                                    data-tooltip-id="map-tooltip"
+                                    data-tooltip-content={`${center.name} (${center.address?.city}, ${center.address?.country})`}
+                                />
+                            </Marker>
+                        );
+                    })}
                 </ZoomableGroup>
             </ComposableMap>
             <Tooltip
                 id="map-tooltip"
-                className="!bg-card !text-card-foreground !border !border-border !rounded-lg !px-3 !py-2 !text-sm !shadow-md !opacity-100"
+                className="!bg-card !text-card-foreground !border !border-border !rounded-lg !px-3 !py-2 !text-sm !shadow-md !opacity-100 z-50"
             />
         </div>
     );

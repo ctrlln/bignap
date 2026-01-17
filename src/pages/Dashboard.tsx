@@ -71,7 +71,7 @@ export function Dashboard() {
     if (!stats) return <div className="p-6"><LoadingState message="Loading dashboard stats..." /></div>;
 
     const cards = [
-        { label: 'Total Students', value: stats.students, icon: Users, color: 'text-blue-500 bg-blue-500/10', path: '/students' },
+        { label: 'Total Trainees', value: stats.trainees, icon: Users, color: 'text-blue-500 bg-blue-500/10', path: '/trainees' },
         { label: 'Active Locations', value: stats.locations, icon: MapPin, color: 'text-emerald-500 bg-emerald-500/10', path: '/locations' },
         { label: 'Certifications', value: stats.certifications, icon: Award, color: 'text-amber-500 bg-amber-500/10', path: '/certifications' },
         { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'text-purple-500 bg-purple-500/10', path: '/courses' },
@@ -136,7 +136,7 @@ export function Dashboard() {
                         <CardContent className="flex-1 flex items-center justify-center">
                             <EmptyState
                                 title="No enrolments"
-                                description="New student registrations will appear here."
+                                description="New trainee registrations will appear here."
                                 icon={Users}
                             />
                         </CardContent>
