@@ -3,13 +3,14 @@ import type { DashboardStats } from '../lib/data/types';
 import { fetchStats } from '../lib/api';
 
 import { useAuth } from '../contexts/AuthContext';
-import { Users, MapPin, Award, BookOpen, Plus, Activity } from 'lucide-react';
+import { Users, MapPin, Award, BookOpen, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { LoadingState } from '../components/ui/LoadingState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { DashboardMap } from '../components/DashboardMap';
 
 export function Dashboard() {
     const { user } = useAuth();
@@ -70,10 +71,10 @@ export function Dashboard() {
     if (!stats) return <div className="p-6"><LoadingState message="Loading dashboard stats..." /></div>;
 
     const cards = [
-        { label: 'Total Students', value: stats.students, icon: Users, color: 'text-blue-500 bg-blue-500/10' },
-        { label: 'Active Locations', value: stats.locations, icon: MapPin, color: 'text-emerald-500 bg-emerald-500/10' },
-        { label: 'Certifications', value: stats.certifications, icon: Award, color: 'text-amber-500 bg-amber-500/10' },
-        { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'text-purple-500 bg-purple-500/10' },
+        { label: 'Total Students', value: stats.students, icon: Users, color: 'text-blue-500 bg-blue-500/10', path: '/students' },
+        { label: 'Active Locations', value: stats.locations, icon: MapPin, color: 'text-emerald-500 bg-emerald-500/10', path: '/locations' },
+        { label: 'Certifications', value: stats.certifications, icon: Award, color: 'text-amber-500 bg-amber-500/10', path: '/certifications' },
+        { label: 'Courses', value: stats.courses, icon: BookOpen, color: 'text-purple-500 bg-purple-500/10', path: '/courses' },
     ];
 
     return (
@@ -81,20 +82,17 @@ export function Dashboard() {
             <PageHeader
                 title="Program Overview"
                 description="Welcome to the Bignap Data management dashboard."
-            >
-                <Button size="sm" variant="outline" onClick={() => navigate('/students')}>
-                    <Users className="mr-2 h-4 w-4" /> Add Student
-                </Button>
-                <Button size="sm" onClick={() => navigate('/courses')}>
-                    <Plus className="mr-2 h-4 w-4" /> New Course
-                </Button>
-            </PageHeader>
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {cards.map((stat) => {
                     const Icon = stat.icon;
                     return (
-                        <Card key={stat.label} className="hover:shadow-md transition-all duration-200">
+                        <Card
+                            key={stat.label}
+                            className="hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-muted/50"
+                            onClick={() => navigate(stat.path)}
+                        >
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium text-muted-foreground">
                                     {stat.label}
@@ -114,31 +112,36 @@ export function Dashboard() {
                 })}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="min-h-[300px] flex flex-col">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center">
-                        <EmptyState
-                            title="No recent activity"
-                            description="System activity logs will appear here."
-                            icon={Activity}
-                        />
-                    </CardContent>
-                </Card>
-                <Card className="min-h-[300px] flex flex-col">
-                    <CardHeader>
-                        <CardTitle>Recent Enrolments</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex items-center justify-center">
-                        <EmptyState
-                            title="No enrolments"
-                            description="New student registrations will appear here."
-                            icon={Users}
-                        />
-                    </CardContent>
-                </Card>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2">
+                    <DashboardMap />
+                </div>
+                <div className="space-y-6">
+                    <Card className="flex flex-col h-[240px]">
+                        <CardHeader>
+                            <CardTitle>Recent Activity</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex items-center justify-center">
+                            <EmptyState
+                                title="No recent activity"
+                                description="System activity logs will appear here."
+                                icon={Activity}
+                            />
+                        </CardContent>
+                    </Card>
+                    <Card className="flex flex-col h-[240px]">
+                        <CardHeader>
+                            <CardTitle>Recent Enrolments</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex items-center justify-center">
+                            <EmptyState
+                                title="No enrolments"
+                                description="New student registrations will appear here."
+                                icon={Users}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

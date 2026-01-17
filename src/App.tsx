@@ -8,7 +8,7 @@ import { DegreesPage } from './pages/DegreesPage';
 import { CertificationsPage } from './pages/CertificationsPage';
 import { CoursesPage } from './pages/CoursesPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { LocationSettingsPage } from './pages/LocationSettingsPage';
+
 import { LoginPage } from './pages/LoginPage';
 
 
@@ -57,11 +57,7 @@ function App() {
               <Route path="certifications" element={<CertificationsPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="location-settings" element={
-                <RequireAuth allowedRoles={['admin', 'master_trainer']}>
-                  <LocationSettingsPage />
-                </RequireAuth>
-              } />
+
             </Route>
           </Routes>
         </FeedbackProvider>

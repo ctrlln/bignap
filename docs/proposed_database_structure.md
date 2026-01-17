@@ -13,8 +13,16 @@ We move away from the "Trainer" boolean flag to a flexible Role system. A user c
 *   `email`: String (Unique, Indexed)
 *   `password_hash`: String (Argon2id)
 *   `first_name`: String
+*   `middle_name`: String
 *   `last_name`: String
 *   `credentials`: String (e.g., "PhD, RN")
+*   `work_phone`: String
+*   `home_phone`: String
+*   `work_location_id`: UUID (FK -> training_centers.id)
+*   `professional_role_id`: UUID (FK -> professional_roles.id)
+*   `specific_profession_id`: UUID (FK -> specific_professions.id)
+*   `work_address`: JSON (Structured: street, city, state, zip, country)
+*   `home_address`: JSON (Structured: street, city, state, zip, country)
 *   `created_at`: Timestamp
 *   `last_login_at`: Timestamp
 
@@ -27,6 +35,15 @@ We move away from the "Trainer" boolean flag to a flexible Role system. A user c
 Many-to-Many junction table.
 *   `user_id`: UUID (FK -> users.id)
 *   `role_id`: UUID (FK -> roles.id)
+
+### `professional_roles`
+*   `id`: UUID (PK)
+*   `name`: String (e.g., Nurse, Physician, OT, PT)
+
+### `specific_professions`
+*   `id`: UUID (PK)
+*   `name`: String
+*   `professional_role_id`: UUID (FK -> professional_roles.id)
 
 > **Permissions Logic:**
 > *   **Admin:** Full system access.
@@ -100,6 +117,8 @@ The official record of a qualification.
 
 ```mermaid
 erDiagram
+    %% Schema with restored types (required for valid Mermaid syntax)
+
     users ||--o{ user_roles : has
     roles ||--o{ user_roles : "assigned to"
     
@@ -113,16 +132,97 @@ erDiagram
     training_centers ||--o{ training_events : "hosts"
     users ||--o{ training_events : "leads"
 
+    users }|--|| training_centers : "works at"
+    users }|--|| professional_roles : "has role"
+    users }|--|| specific_professions : "has spec"
+    specific_professions }|--|| professional_roles : "belongs to"
+
+    training_events ||--o{ event_trainers : "has"
+    users ||--o{ event_trainers : "participates as trainer"
+
+    users {
+        UUID id
+        String email
+        String password_hash
+        String first_name
+        String middle_name
+        String last_name
+        String credentials
+        String work_phone
+        String home_phone
+        UUID work_location_id
+        UUID professional_role_id
+        UUID specific_profession_id
+        JSON work_address
+        JSON home_address
+        Timestamp created_at
+        Timestamp last_login_at
+    }
+
+    roles {
+        UUID id
+        String name
+        String description
+    }
+
+    user_roles {
+        UUID user_id
+        UUID role_id
+    }
+
+    professional_roles {
+        UUID id
+        String name
+    }
+
+    specific_professions {
+        UUID id
+        String name
+        UUID professional_role_id
+    }
+
     training_centers {
-        uuid id
-        string name
-        string stamp_url "Path to uploaded SVG/PNG"
+        UUID id
+        String name
+        JSON address_json
+        Integer nursery_level
+        String stamp_url
+        Boolean is_active
+    }
+
+    training_events {
+        UUID id
+        UUID center_id
+        String course_type
+        Date start_date
+        Date end_date
+        UUID lead_trainer_id
+    }
+
+    event_trainers {
+        UUID event_id
+        UUID trainer_id
+        Enum role
+    }
+
+    enrollments {
+        UUID id
+        UUID event_id
+        UUID student_id
+        Enum status
+        String grade
     }
 
     certifications {
-        uuid id
-        string pdf_url "Download link"
-        string signature_hash "For verification"
+        UUID id
+        UUID user_id
+        Enum certification_type
+        Date issue_date
+        UUID issuing_center_id
+        UUID signer_user_id
+        String pdf_url
+        String signature_hash
+        Timestamp revoked_at
     }
 ```
 

@@ -13,7 +13,24 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    let token = authHeader && authHeader.split(' ')[1];
+
+    if (!token && req.query && req.query.token) {
+        token = req.query.token as string;
+    }
+
+    console.log('Auth Token Analysis:', {
+        tokenExists: !!token,
+        tokenLength: token ? token.length : 0,
+        firstChar: token ? token[0] : 'N/A',
+        lastChar: token ? token[token.length - 1] : 'N/A',
+        raw: JSON.stringify(token)
+    });
+
+    if (token && (token.startsWith('"') || token.startsWith("'"))) {
+        console.log('Detected quotes in token, stripping...');
+        token = token.slice(1, -1);
+    }
 
     if (!token) {
         return next(); // Don't block here, just don't attach user. requireAuth will block.

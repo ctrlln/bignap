@@ -5,13 +5,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { fetchMyCertifications } from '../lib/api';
 import type { Certification, Address } from '../lib/data/types';
-import { generateCertificatePDF } from '../lib/certificate';
-import { Award, Save, Loader2, Download, LogOut, MapPin } from 'lucide-react';
+import { Award, Save, Loader2, Download, MapPin } from 'lucide-react';
+
 import { LocationSearchInput } from '../components/ui/LocationSearchInput';
 import { Input } from '../components/ui/Input';
 
 export function ProfilePage() {
-    const { user, updateProfile, logout } = useAuth();
+    const { user, updateProfile } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [certificates, setCertificates] = useState<Certification[]>([]);
     const [isLoadingCerts, setIsLoadingCerts] = useState(true);
@@ -186,11 +186,23 @@ export function ProfilePage() {
                                             variant="outline"
                                             className="text-xs flex items-center gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/20 text-muted-foreground"
                                             onClick={async () => {
-                                                let stampUrl = null;
-                                                if (cert.issuing_center_stamp_url) {
-                                                    stampUrl = `http://localhost:3000/uploads/${cert.issuing_center_stamp_url}`;
+                                                try {
+                                                    const token = localStorage.getItem('bignap_token');
+                                                    if (!token) {
+                                                        alert('Please log in again.');
+                                                        return;
+                                                    }
+
+                                                    // Direct download using URL with token
+                                                    // This relies on the server's Content-Disposition header which is the most robust way to handle filenames
+                                                    const downloadUrl = `http://localhost:3000/api/my-certifications/${cert.id}/download.pdf?token=${encodeURIComponent(token)}`;
+                                                    console.log('Navigating to download URL:', downloadUrl);
+                                                    window.location.assign(downloadUrl);
+
+                                                } catch (e) {
+                                                    console.error('Download error:', e);
+                                                    alert('Failed to download certificate. Please try again.');
                                                 }
-                                                await generateCertificatePDF(user as any, cert, stampUrl);
                                             }}
                                             title="Download PDF Certificate"
                                         >
@@ -204,15 +216,6 @@ export function ProfilePage() {
                 </Card>
             </div>
 
-            <div className="flex justify-center pt-8 pb-4">
-                <Button
-                    variant="default"
-                    onClick={() => logout()}
-                    className="bg-red-600 hover:bg-red-700 text-white text-lg px-8 py-6 w-full max-w-sm shadow-lg flex items-center justify-center gap-2"
-                >
-                    <LogOut size={24} /> Log Out Securely
-                </Button>
-            </div>
         </div>
     );
 }

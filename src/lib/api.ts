@@ -48,6 +48,11 @@ export async function fetchStats(): Promise<DashboardStats> {
     return fetchWithAuth('/admin/stats');
 }
 
+export async function fetchMapData(): Promise<{ name: string, coordinates: [number, number], count: number }[]> {
+    return fetchWithAuth('/admin/map-data');
+}
+
+
 export async function fetchDegrees(): Promise<Degree[]> {
     return fetchWithAuth('/admin/degrees');
 }
@@ -69,3 +74,41 @@ export async function updateProfile(data: Partial<User>): Promise<User> {
 }
 
 
+
+export async function updateCenter(id: string, data: Partial<TrainingCenter>): Promise<TrainingCenter> {
+    return fetchWithAuth(`/admin/centers/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+export async function deleteCenter(id: string): Promise<void> {
+    await fetchWithAuth(`/admin/centers/${id}`, {
+        method: 'DELETE'
+    });
+}
+
+export async function uploadStamp(locationId: string, file: File): Promise<{ message: string, filename: string }> {
+    const formData = new FormData();
+    formData.append('stamp', file);
+    formData.append('location_id', locationId);
+
+    const headers = getAuthHeaders();
+    // Remove Content-Type so browser sets boundary for FormData
+    delete headers['Content-Type'];
+
+    const response = await fetch(`${API_BASE}/locations/stamp`, {
+        method: 'POST',
+        headers: {
+            ...headers,
+        },
+        body: formData
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Upload failed');
+    }
+    return response.json();
+}

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -162,6 +162,85 @@ router.get('/my-certifications', requireAuth, (req, res) => {
     }
 });
 
+// Protected: Download Certificate PDF
+// Route for downloading certificate PDF (supports direct link with token query param)
+// Matches both /pdf and /download.pdf to ensure browser sees extension in URL
+router.get(['/my-certifications/:id/pdf', '/my-certifications/:id/download.pdf'], authenticate, async (req: AuthRequest, res: Response) => {
+    try {
+        const certId = req.params.id;
+        const userId = req.user!.sub; // authenticate middleware guarantees user is set
+
+        // Fetch cert and verify ownership
+        const cert = db.prepare(`
+           SELECT c.*, centers.name as issuing_center_name, centers.stamp_url as issuing_center_stamp_url
+           FROM certifications c
+           LEFT JOIN training_centers centers ON c.issuing_center_id = centers.id
+           WHERE c.id = ? AND c.user_id = ?
+       `).get(certId, userId) as any;
+
+        if (!cert) {
+            return res.status(404).json({ error: 'Certification not found' });
+        }
+
+        // Fetch full user details for the name
+        const userDetails = db.prepare('SELECT first_name, last_name FROM users WHERE id = ?').get(userId) as { first_name: string, last_name: string };
+
+        // Set headers
+        const safeName = cert.certification_type.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const filename = `certificate-${safeName}-${Date.now()}.pdf`;
+
+        const tempDir = path.join(process.cwd(), 'uploads/temp');
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+        const tempFilePath = path.join(tempDir, filename);
+
+        const { generateCertificatePDF } = await import('./pdf-generator.js');
+
+        // Handle stamp URL
+        let stampUrl = null;
+        if (cert.issuing_center_stamp_url) {
+            stampUrl = cert.issuing_center_stamp_url;
+        }
+
+        const pdfBuffer = await generateCertificatePDF(cert, { id: userId, email: req.user!.email, ...userDetails } as any, stampUrl);
+
+        // Write to temp file
+        // DEBUG: Verify signature structure before writing
+        const bufferStr = pdfBuffer.toString('latin1');
+        const hasFtSig = bufferStr.includes('/FT /Sig');
+        const hasTypeSig = bufferStr.includes('/Type /Sig');
+        console.log(`DEBUG CHECK: Result PDF Size: ${pdfBuffer.length}, Has /FT /Sig: ${hasFtSig}, Has /Type /Sig: ${hasTypeSig}`);
+
+        if (!hasFtSig) {
+            console.error('CRITICAL: PDF generated without Signature Field!');
+        }
+
+        fs.writeFileSync(tempFilePath, pdfBuffer);
+
+        console.log('Sending file via res.download:', tempFilePath, filename);
+
+        res.download(tempFilePath, filename, (err) => {
+            if (err) {
+                console.error('Download error:', err);
+                if (!res.headersSent) {
+                    res.status(500).send('Download failed');
+                }
+            }
+            // Cleanup in both success and error cases (if file exists)
+            try {
+                if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+            } catch (cleanupErr) {
+                console.error('Cleanup error:', cleanupErr);
+            }
+        });
+
+    } catch (e) {
+        console.error('PDF Generation Error:', e);
+        res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+});
+
 // Admin: All Certifications
 router.get('/admin/certifications', requireRole('admin'), (req, res) => {
     try {
@@ -176,6 +255,72 @@ router.get('/admin/certifications', requireRole('admin'), (req, res) => {
         res.status(500).json({ error: 'Failed to fetch certifications' });
     }
 });
+
+
+// Admin: Map Data (Aggregated Certifications by Center Location)
+router.get('/admin/map-data', requireAuth, (req, res) => {
+    try {
+        const result = db.prepare(`
+            SELECT 
+                tc.name, 
+                tc.address_json,
+                count(c.id) as count
+            FROM certifications c
+            JOIN training_centers tc ON c.issuing_center_id = tc.id
+            GROUP BY tc.id
+        `).all() as { name: string, address_json: string, count: number }[];
+
+        // Precise coordinates static lookup (fallback)
+        // Note: Ideally all centers have lat/lng in address_json from seed
+        const cityCoords: Record<string, [number, number]> = {
+            'Boston': [-71.0589, 42.3601],
+            'Stockholm': [18.0686, 59.3293],
+            'Oklahoma City': [-97.5164, 35.4676],
+            'Berlin': [13.4050, 52.5200],
+            'San Francisco': [-122.4194, 37.7749],
+            'Boise': [-116.2023, 43.6150],
+            'Modena': [10.9252, 44.6471],
+            'Barcelona': [2.1734, 41.3851],
+        };
+
+        const mapData = result.map(center => {
+            let coordinates: [number, number] | null = null;
+
+            // Try to parse address_json for lat/lng
+            if (center.address_json) {
+                try {
+                    const addr = JSON.parse(center.address_json);
+                    if (addr.lat && addr.lng) {
+                        coordinates = [parseFloat(addr.lng), parseFloat(addr.lat)]; // GeoJSON is [lng, lat]
+                    } else if (addr.city && cityCoords[addr.city]) {
+                        coordinates = cityCoords[addr.city];
+                    }
+                } catch (e) {
+                    console.warn(`Failed to parse address for center ${center.name}`);
+                }
+            }
+
+            if (!coordinates) {
+                // Fallback if seeded data matches name (less reliable)
+                // For now, if no coords, we skip or put at 0,0
+                return null;
+            }
+
+            return {
+                name: center.name,
+                coordinates,
+                count: center.count
+            };
+        }).filter(item => item !== null);
+
+        res.json({ data: mapData });
+    } catch (e) {
+        console.error('Failed to fetch map data:', e);
+        res.status(500).json({ error: 'Failed to fetch map data' });
+    }
+});
+
+
 
 // Admin: Dashboard Stats
 router.get('/admin/stats', requireRole('admin'), (req, res) => {
@@ -301,6 +446,50 @@ router.post('/admin/centers', requireAnyRole(['admin', 'master_trainer']), (req,
     } catch (error) {
         console.error('Failed to create center:', error);
         res.status(500).json({ error: 'Failed to create training center' });
+    }
+});
+
+// Update Training Center (Admin/Master Trainer)
+router.put('/admin/centers/:id', requireAnyRole(['admin', 'master_trainer']), (req, res) => {
+    const { id } = req.params;
+    const { name, nursery_level, address, is_active } = req.body;
+
+    // Build query
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (name) { updates.push('name = ?'); params.push(name); }
+    if (nursery_level) { updates.push('nursery_level = ?'); params.push(nursery_level); }
+    if (address) { updates.push('address_json = ?'); params.push(JSON.stringify(address)); }
+    if (typeof is_active !== 'undefined') { updates.push('is_active = ?'); params.push(is_active); }
+
+    if (updates.length === 0) return res.json({ data: null }); // Nothing to do
+
+    params.push(id);
+
+    try {
+        const result = db.prepare(`UPDATE training_centers SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+        if (result.changes === 0) return res.status(404).json({ error: 'Center not found' });
+
+        const updated = db.prepare('SELECT * FROM training_centers WHERE id = ?').get(id);
+        res.json({ data: parseAddress(updated) });
+    } catch (e) {
+        console.error('Update center failed', e);
+        res.status(500).json({ error: 'Failed to update center' });
+    }
+});
+
+// Delete Training Center (Admin only - Soft Delete)
+router.delete('/admin/centers/:id', requireRole('admin'), (req, res) => {
+    const { id } = req.params;
+    try {
+        // Soft delete
+        const result = db.prepare('UPDATE training_centers SET is_active = 0 WHERE id = ?').run(id);
+        if (result.changes === 0) return res.status(404).json({ error: 'Center not found' });
+        res.json({ message: 'Center deleted (soft)' });
+    } catch (e) {
+        console.error('Delete center failed', e);
+        res.status(500).json({ error: 'Failed to delete center' });
     }
 });
 

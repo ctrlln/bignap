@@ -33,6 +33,20 @@ export function CertificationsPage() {
                             : 'Unknown'
                     },
                     { header: 'Center', accessor: (c) => c.issuing_center_name || 'N/A' },
+                    {
+                        header: 'Action', accessor: (c) => {
+                            const token = localStorage.getItem('bignap_token');
+                            return (
+                                <a
+                                    href={`http://localhost:3000/api/my-certifications/${c.id}/download.pdf?token=${token}`}
+                                    className="text-blue-600 hover:underline text-sm font-medium"
+                                    download // Attribute to hint browser to download
+                                >
+                                    Download PDF
+                                </a>
+                            );
+                        }
+                    },
                 ]}
             />
         </div>
